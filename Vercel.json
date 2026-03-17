@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "redis-manager.js",
+      "src": "api/redis.js",
       "use": "@vercel/node"
     },
     {
@@ -12,12 +12,12 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "redis-manager.js"
+      "src": "/api/redis",
+      "dest": "api/redis.js"
     },
     {
       "src": "/(.*)",
-      "dest": "public/index.html"
+      "dest": "public/$1"
     }
   ]
 }
