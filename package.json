@@ -1,0 +1,20 @@
+{
+  "name": "enside-system",
+  "version": "1.0.0",
+  "description": "ENSIDE System - Complete project management with Redis integration",
+  "main": "api-redis.js",
+  "scripts": {
+    "start": "node api-redis.js",
+    "sync": "node redis-sync.js",
+    "dev": "nodemon api-redis.js"
+  },
+  "dependencies": {
+    "redis": "^4.6.0",
+    "express": "^4.18.0",
+    "dotenv": "^16.0.0",
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
