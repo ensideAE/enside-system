@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redis Manager - ENSIDE System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        .panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .keys-list {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .key-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .key-item:hover {
+            background: #f0f0f0;
+        }
+        .key-item.active {
+            background: #667eea;
+            color: white;
+        }
+        .info-box {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-item:last-child { border-bottom: none; }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔴 Redis Manager</h1>
+            <p>ENSIDE System - Gerenciador de Banco de Dados Redis</p>
+        </div>
+        
+        <div class="content">
+            <!-- Panel 1: Keys Management -->
+            <div class="panel">
+                <h2>📋 Chaves (Keys)</h2>
+                <button class="btn-success" onclick="loadKeys()">🔄 Carregar Chaves</button>
+                <div class="keys-list" id="keysList"></div>
+                <div class="status info" id="keyCount">Carregando...</div>
+            </div>
+            
+            <!-- Panel 2: Key Operations -->
+            <div class="panel">
+                <h2>⚙️ Operações</h2>
+                <div class="form-group">
+                    <label>Chave Selecionada:</label>
+                    <input type="text" id="selectedKey" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Valor:</label>
+                    <textarea id="keyValue" rows="4"></textarea>
+                </div>
+                <button class="btn-success" onclick="setKey()">💾 Salvar</button>
+                <button class="btn-danger" onclick="deleteKey()">🗑️ Deletar</button>
+            </div>
+            
+            <!-- Panel 3: Add New Key -->
+            <div class="panel">
+                <h2>➕ Nova Chave</h2>
+                <div class="form-group">
+                    <label>Nome da Chave:</label>
+                    <input type="text" id="newKeyName" placeholder="ex: user:1">
+                </div>
+                <div class="form-group">
+                    <label>Valor:</label>
+                    <textarea id="newKeyValue" rows="4" placeholder="ex: {\"name\": \"John\"}"></textarea>
+                </div>
+                <button class="btn-success" onclick="addNewKey()">➕ Adicionar</button>
+            </div>
+            
+            <!-- Panel 4: Database Info -->
+            <div class="panel">
+                <h2>ℹ️ Informações do Banco</h2>
+                <button class="btn-success" onclick="loadInfo()">🔄 Atualizar Info</button>
+                <div class="info-box" id="infoBox">
+                    <p>Clique em "Atualizar Info" para carregar informações...</p>
+                </div>
+            </div>
+            
+            <!-- Panel 5: Danger Zone -->
+            <div class="panel full-width">
+                <h2>⚠️ Zona de Perigo</h2>
+                <button class="btn-danger" onclick="flushDatabase()">🔥 Limpar Banco de Dados</button>
+                <div id="statusMessage"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function loadKeys() {
+            try {
+                const res = await fetch('/api/keys');
+                const data = await res.json();
+                const list = document.getElementById('keysList');
+                list.innerHTML = '';
+                
+                data.keys.forEach(key => {
+                    const div = document.createElement('div');
+                    div.className = 'key-item';
+                    div.textContent = key;
+                    div.onclick = () => selectKey(key);
+                    list.appendChild(div);
+                });
+                
+                document.getElementById('keyCount').textContent = `Total: ${data.count} chaves`;
+                document.getElementById('keyCount').className = 'status info';
+            } catch (err) {
+                showStatus('Erro ao carregar chaves: ' + err.message, 'error');
+            }
+        }
+        
+        async function selectKey(key) {
+            try {
+                const res = await fetch(`/api/key/${key}`);
+                const data = await res.json();
+                document.getElementById('selectedKey').value = key;
+                document.getElementById('keyValue').value = data.value || '';
+                
+                // Highlight selected key
+                document.querySelectorAll('.key-item').forEach(el => {
+                    el.classList.remove('active');
+                    if (el.textContent === key) el.classList.add('active');
+                });
+            } catch (err) {
+                showStatus('Erro ao carregar chave: ' + err.message, 'error');
+            }
+        }
+        
+        async function setKey() {
+            const key = document.getElementById('selectedKey').value;
+            const value = document.getElementById('keyValue').value;
+            
+            if (!key) {
+                showStatus('Selecione uma chave primeiro', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, value })
+                });
+                const data = await res.json();
+                showStatus('Chave salva com sucesso!', 'success');
+                loadKeys();
+            } catch (err) {
+                showStatus('Erro ao salvar: ' + err.message, 'error');
+            }
+        }
+        
+        async function deleteKey() {
+            const key = document.getElementById('selectedKey').value;
+            if (!key) {
+                showStatus('Selecione uma chave primeiro', 'error');
+                return;
+            }
+            
+            if (!confirm(`Tem certeza que deseja deletar "${key}"?`)) return;
+            
+            try {
+                const res = await fetch(`/api/key/${key}`, { method: 'DELETE' });
+                const data = await res.json();
+                showStatus('Chave deletada com sucesso!', 'success');
+                document.getElementById('selectedKey').value = '';
+                document.getElementById('keyValue').value = '';
+                loadKeys();
+            } catch (err) {
+                showStatus('Erro ao deletar: ' + err.message, 'error');
+            }
+        }
+        
+        async function addNewKey() {
+            const key = document.getElementById('newKeyName').value;
+            const value = document.getElementById('newKeyValue').value;
+            
+            if (!key || !value) {
+                showStatus('Preencha nome e valor da chave', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, value })
+                });
+                const data = await res.json();
+                showStatus('Chave adicionada com sucesso!', 'success');
+                document.getElementById('newKeyName').value = '';
+                document.getElementById('newKeyValue').value = '';
+                loadKeys();
+            } catch (err) {
+                showStatus('Erro ao adicionar: ' + err.message, 'error');
+            }
+        }
+        
+        async function loadInfo() {
+            try {
+                const res = await fetch('/api/info');
+                const data = await res.json();
+                const info = data.info;
+                
+                let html = '<div class="info-item"><strong>Status:</strong> <span style="color: green;">✓ Conectado</span></div>';
+                html += '<div class="info-item"><strong>Versão:</strong> <span>' + (info.redis_version || 'N/A') + '</span></div>';
+                html += '<div class="info-item"><strong>Modo:</strong> <span>' + (info.redis_mode || 'N/A') + '</span></div>';
+                html += '<div class="info-item"><strong>Porta:</strong> <span>6380</span></div>';
+                html += '<div class="info-item"><strong>Clientes Conectados:</strong> <span>' + (info.connected_clients || '0') + '</span></div>';
+                html += '<div class="info-item"><strong>Memória Usada:</strong> <span>' + (info.used_memory_human || 'N/A') + '</span></div>';
+                html += '<div class="info-item"><strong>Uptime:</strong> <span>' + (info.uptime_in_seconds || '0') + 's</span></div>';
+                
+                document.getElementById('infoBox').innerHTML = html;
+            } catch (err) {
+                showStatus('Erro ao carregar info: ' + err.message, 'error');
+            }
+        }
+        
+        async function flushDatabase() {
+            if (!confirm('⚠️ AVISO: Isto vai deletar TODOS os dados do Redis! Tem certeza?')) return;
+            
+            try {
+                const res = await fetch('/api/flush', { method: 'POST' });
+                const data = await res.json();
+                showStatus('Banco de dados limpo com sucesso!', 'success');
+                document.getElementById('selectedKey').value = '';
+                document.getElementById('keyValue').value = '';
+                loadKeys();
+            } catch (err) {
+                showStatus('Erro ao limpar: ' + err.message, 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const el = document.getElementById('statusMessage');
+            el.textContent = message;
+            el.className = 'status ' + type;
+        }
+        
+        // Load keys on page load
+        window.addEventListener('load', () => {
+            loadKeys();
+            loadInfo();
+        });
+    </script>
+</body>
+</html>
